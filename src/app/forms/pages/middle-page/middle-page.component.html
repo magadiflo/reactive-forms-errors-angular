@@ -1,1 +1,42 @@
-<p>middle-page works!</p>
+<div class="row">
+  <div class="col-12 col-sm-12 offset-md-3 col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Alumno: <small class="text-info">Martín Díaz</small></h5>
+        <form [formGroup]="formGroup" (ngSubmit)="saveData()">
+          <div class="section-check">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked1"
+                formControlName="doYouPayAttentionToClasses">
+              <label class="form-check-label" for="flexSwitchCheckChecked1">¿Presta atención a las clases?</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked2"
+                formControlName="doYouSubmitYourAssignmentsOnTime">
+              <label class="form-check-label" for="flexSwitchCheckChecked2">¿Presenta sus tareas a tiempo?</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked3"
+                formControlName="missingClasses">
+              <label class="form-check-label" for="flexSwitchCheckChecked3">¿Falta a clases?</label>
+            </div>
+          </div>
+          <hr>
+          <div class="mb-3">
+            <label for="name-father" class="form-label">Observaciones:</label>
+            <input type="text" class="form-control" id="name-father" formControlName="observations">
+          </div>
+          <hr>
+          <div class="section-parents">
+            <person-data-middle title="Datos del padre" formGroupName="dataFather" />
+            <hr>
+            <person-data-middle title="Datos de la madre" formGroupName="dataMother" />
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
