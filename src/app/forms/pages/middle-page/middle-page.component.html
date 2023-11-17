@@ -25,6 +25,9 @@
           <div class="mb-3">
             <label for="name-father" class="form-label">Observaciones:</label>
             <input type="text" class="form-control" id="name-father" formControlName="observations">
+            <div class="form-text text-danger">
+              {{ getError(formGroup.controls['observations']) }}
+            </div>
           </div>
           <hr>
           <div class="section-parents">
