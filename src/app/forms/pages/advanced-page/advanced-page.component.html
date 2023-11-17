@@ -1,1 +1,70 @@
-<p>advanced-page works!</p>
+<div class="row">
+  <div class="col-12 col-sm-12 offset-md-3 col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Alumno: <small class="text-info">Martín Díaz</small></h5>
+        <form [formGroup]="formGroup" (ngSubmit)="saveData()">
+          <div class="section-check">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked1"
+                formControlName="doYouPayAttentionToClasses">
+              <label class="form-check-label" for="flexSwitchCheckChecked1">¿Presta atención a las clases?</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked2"
+                formControlName="doYouSubmitYourAssignmentsOnTime">
+              <label class="form-check-label" for="flexSwitchCheckChecked2">¿Presenta sus tareas a tiempo?</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked3"
+                formControlName="missingClasses">
+              <label class="form-check-label" for="flexSwitchCheckChecked3">¿Falta a clases?</label>
+            </div>
+          </div>
+          <hr>
+          <div class="mb-3">
+            <label for="name-father" class="form-label">Observaciones:</label>
+            <input type="text" class="form-control" id="name-father" formControlName="observations">
+          </div>
+          <hr>
+          <div class="section-parents">
+            <h6>Datos del padre</h6>
+            <div class="row father-data" formGroupName="dataFather">
+              <div class="col-6">
+                <div class="mb-3">
+                  <label for="name-father" class="form-label">Nombres</label>
+                  <input type="text" class="form-control" id="name-father" formControlName="names">
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mb-3">
+                  <label for="lastname-father" class="form-label">Apellidos</label>
+                  <input type="text" class="form-control" id="lastname-father" formControlName="lastName">
+                </div>
+              </div>
+            </div>
+            <hr>
+            <h6>Datos de la madre</h6>
+            <div class="row mother-data" formGroupName="dataMother">
+              <div class="col-6">
+                <div class="mb-3">
+                  <label for="name-mother" class="form-label">Nombres</label>
+                  <input type="text" class="form-control" id="name-mother" formControlName="names">
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mb-3">
+                  <label for="lastname-mother" class="form-label">Apellidos</label>
+                  <input type="text" class="form-control" id="lastname-mother" formControlName="lastName">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
