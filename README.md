@@ -302,3 +302,46 @@ Finalmente, en el componente `middle-page.component.html` hacemos uso del métod
 ````
 
 ![errors](./src/assets/02.middle-form-error.png)
+
+## Directivas en Angular
+
+Veamos rápidamente el atributo `selector` de una directiva y cuáles son las formas en las que se pueden definir. Supongamos que creamos dos directivas, uno con el selector sin corchetes y otro con corchetes, **¿cuál es la diferencia?**:
+
+- `@Directive({ selector: 'myDirective'})`, este selector busca un `elemento (etiqueta)` llamada `<myDirective>` en el DOM. El selector está configurado para coincidir con el nombre del elemento directamente.
+  > **Ejemplo:**<br>
+  > `<myDirective></myDirective>`
+
+- `@Directive({ selector: '[myDirective]'})`, este selector utliza una `notación de atributo` y busca un elemento que tenga un atributo `myDirective`. El selector está configurado para coincidir con elementos que tienen el atributo `myDirective` independientemente del valor especificado de ese atributo.
+  > **Ejemplo:**<br>
+  > `<some-tag myDirective='algún valor'></some-tag>`
+
+**NOTA**
+> La propiedad `selector` del decorador `@Directive` es un selector CSS.
+
+## Directiva para capturar el Submit de los Form
+
+Crearemos la siguiente directiva que capturará el `submit` de un formulario `form`:
+
+````typescript
+@Directive({
+  selector: 'form', // Selecciona la etiqueta html <form>
+  standalone: true
+})
+export class FormSubmitDirective {
+
+  private readonly _host: ElementRef<HTMLFormElement> = inject(ElementRef); //Injectamos el Form
+  public sumit$ = fromEvent(this.element, 'submit').pipe(shareReplay(1));// Capturamos el evento `submit` del form
+
+  public get element() {
+    return this._host.nativeElement;
+  }
+
+  constructor() {
+    console.log('FormSubmitDirective');
+  }
+
+}
+````
+
+**DONDE**
+- `shareReplay(1)`, comparte el Observable fuente entre varios suscriptores, repitiendo las últimas n emisiones con cada suscripción.

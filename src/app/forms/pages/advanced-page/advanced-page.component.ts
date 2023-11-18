@@ -1,10 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
+import { FormSubmitDirective } from '../../../directives/form-submit.directive';
+
 @Component({
   selector: 'advanced-page',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, FormSubmitDirective],
   templateUrl: './advanced-page.component.html',
   styles: ``
 })
