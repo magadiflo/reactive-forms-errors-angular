@@ -345,3 +345,250 @@ export class FormSubmitDirective {
 
 **DONDE**
 - `shareReplay(1)`, comparte el Observable fuente entre varios suscriptores, repitiendo las últimas n emisiones con cada suscripción.
+
+Luego que hemos creado dicha directiva, lo agregaremos en el componente `AdvancedPageComponent`: 
+
+````typescript
+@Component({
+  selector: 'advanced-page',
+  standalone: true,
+  imports: [ReactiveFormsModule, FormSubmitDirective],
+  templateUrl: './advanced-page.component.html',
+  styles: ``
+})
+export class AdvancedPageComponent {
+  /* code */
+}
+````
+
+Una vez que hemos agregado la directiva a este componente, de inmediato se desencadenará dicha directiva,  creando el observable `submit$` y esperando a que se desencadene dicho evento. De esa manera estaremos atentos cada vez que el formulario lance un evento del tipo `submit`.
+
+## Directiva para controlar y mostrar el error
+
+Ahora crearemos la directiva `ControlErrorsDirective` que será la encargada de administrar cada uno de los errores que existan en el formulario.
+
+````typescript
+import { Directive, inject, OnInit, OnDestroy, ElementRef, ComponentRef, ViewContainerRef } from '@angular/core';
+import { NgControl } from '@angular/forms';
+import { EMPTY, Subject, fromEvent, merge, takeUntil } from 'rxjs';
+
+import { ControlErrorComponent } from '../components/control-error/control-error.component';
+import { FormSubmitDirective } from './form-submit.directive';
+import { getFormControlError } from '../utils/functions-form';
+
+@Directive({
+  selector: '[formControl], [formControlName]', //estaremos pendientes de aquellos elementos que tienen estos atributos, ya que son precisamente estos atributos los que van a generar el error o no
+  standalone: true
+})
+export class ControlErrorsDirective implements OnInit, OnDestroy {
+  //observations -> FormControl
+
+  private readonly ngControl = inject(NgControl); //NgControl, es la clase base del FormControl
+  private readonly form = inject(FormSubmitDirective, { optional: true }); //Instancia de la directiva FormSubmitDirectiva que nos permitirá acceder al observable submit$ definido
+  private readonly elementRef: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly vcr = inject(ViewContainerRef); //Con viewContainerRef creamos el elemento
+  private componentRef!: ComponentRef<ControlErrorComponent>;//Para crear componentes en Angular de manera dinámica necesitamos usar el ComponentRef<>
+
+  private readonly destroy$ = new Subject<void>();
+  private readonly submit$ = this.form ? this.form.sumit$ : EMPTY;
+  private readonly blurEvent$ = fromEvent(this.elementRef.nativeElement, 'blur');
+
+  constructor() {
+    console.log('ControlErrorsDirective');
+  }
+
+  //merge, convierte múltiples observables en un único observable. El operador merge() es la solución a la que puede recurrir cuando tiene varios observables que producen valores de forma independiente y desea combinar su salida en un único flujo. Piense en ello como en una fusión de autopistas, donde varias carreteras se unen para formar una única carretera unificada: el tráfico (datos) de cada carretera (observable) fluye a la perfección. Ten en cuenta que merge emitirá valores tan pronto como cualquiera de los observables emita un valor.
+  ngOnInit(): void {
+    //Nos subscribiemos a los tres observables
+    merge(this.submit$, this.blurEvent$, this.ngControl.statusChanges!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        const errorControl = getFormControlError(this.ngControl.control!);
+        this.setError(errorControl);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  setError(text: string) {
+    if (!this.componentRef) {
+      this.componentRef = this.vcr.createComponent(ControlErrorComponent);
+    }
+    this.componentRef.instance.error = text;
+  }
+
+}
+````
+
+A partir de aquí solo mostraré el código que se escribió para realizar la validación
+
+`control-error.component.ts`
+````typescript
+@Component({
+  selector: 'app-control-error',
+  standalone: true,
+  imports: [],
+  templateUrl: './control-error.component.html',
+  styles: ``,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ControlErrorComponent {
+  public textError: string = '';
+
+  @Input() set error(value: string) {
+    if (value !== this.textError) {
+      this.textError = value;
+      this.cdr.detectChanges();
+    }
+  }
+
+  constructor(private cdr: ChangeDetectorRef) { }
+}
+````
+
+`control-error.component.html`
+````html
+<div class="form-text text-danger">{{ textError }}</div>
+````
+
+
+`qualifyings.service.ts`
+````typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class QualifyingsService {
+
+  private _qualifyings = ['bruto', 'idiota', 'estupido'];
+
+  checkIfQualifyingExists(value: string) {
+    const existsQualifying = this._qualifyings.some(qualifying => value.search(qualifying) > -1);
+    return of(existsQualifying).pipe(delay(1000));
+  }
+}
+````
+
+`custom-validators.ts`
+````typescript
+export const qualifyingValidator = (userService: QualifyingsService): AsyncValidatorFn => {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    return userService.checkIfQualifyingExists(control.value)
+      .pipe(
+        map((result: boolean) => result ? { qualifierExists: 'No debe agregar calificativos en la observación!!' } : null)
+      );
+  }
+}
+````
+
+Finalmente, el formulario avanzado:
+
+````typescript
+@Component({
+  selector: 'advanced-page',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    FormSubmitDirective,
+    ControlErrorsDirective,
+  ],
+  templateUrl: './advanced-page.component.html',
+  styles: ``
+})
+export class AdvancedPageComponent {
+
+  private _formBuilder = inject(FormBuilder);
+  private _qualifyingsService = inject(QualifyingsService);
+
+  public formGroup: FormGroup = this._formBuilder.group({
+    doYouPayAttentionToClasses: [false],
+    doYouSubmitYourAssignmentsOnTime: [false],
+    missingClasses: [false],
+    observations: ['', [Validators.required], [qualifyingValidator(this._qualifyingsService)]], //qualifyingValidator, es una validación asíncrona. Las validaciones asíncronas van en otro array.
+    dataFather: this._formBuilder.group({
+      names: ['', [Validators.required]],
+      lastName: ['', [Validators.required]],
+    }),
+    dataMother: this._formBuilder.group({
+      names: ['', [Validators.required]],
+      lastName: ['', [Validators.required]],
+    }),
+  });
+
+  public saveData(): void {
+    console.log(this.formGroup.value);
+    this.formGroup.markAllAsTouched();
+  }
+
+}
+````
+
+````html
+<form [formGroup]="formGroup" (ngSubmit)="saveData()">
+  <div class="section-check">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked1"
+        formControlName="doYouPayAttentionToClasses">
+      <label class="form-check-label" for="flexSwitchCheckChecked1">¿Presta atención a las clases?</label>
+    </div>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked2"
+        formControlName="doYouSubmitYourAssignmentsOnTime">
+      <label class="form-check-label" for="flexSwitchCheckChecked2">¿Presenta sus tareas a tiempo?</label>
+    </div>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked3"
+        formControlName="missingClasses">
+      <label class="form-check-label" for="flexSwitchCheckChecked3">¿Falta a clases?</label>
+    </div>
+  </div>
+  <hr>
+  <div class="mb-3">
+    <label for="observations" class="form-label">Observaciones:</label>
+    <input type="text" class="form-control" id="observations" formControlName="observations">
+  </div>
+  <hr>
+  <div class="section-parents">
+    <h6>Datos del padre</h6>
+    <div class="row father-data" formGroupName="dataFather">
+      <div class="col-6">
+        <div class="mb-3">
+          <label for="name-father" class="form-label">Nombres</label>
+          <input type="text" class="form-control" id="name-father" formControlName="names">
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="mb-3">
+          <label for="lastname-father" class="form-label">Apellidos</label>
+          <input type="text" class="form-control" id="lastname-father" formControlName="lastName">
+        </div>
+      </div>
+    </div>
+    <hr>
+    <h6>Datos de la madre</h6>
+    <div class="row mother-data" formGroupName="dataMother">
+      <div class="col-6">
+        <div class="mb-3">
+          <label for="name-mother" class="form-label">Nombres</label>
+          <input type="text" class="form-control" id="name-mother" formControlName="names">
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="mb-3">
+          <label for="lastname-mother" class="form-label">Apellidos</label>
+          <input type="text" class="form-control" id="lastname-mother" formControlName="lastName">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+  </div>
+</form>
+````
+
+Resultado:
+
+![resultado validación avanzada](./src/assets/03.advanced-form.png)
